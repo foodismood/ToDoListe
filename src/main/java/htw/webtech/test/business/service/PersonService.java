@@ -1,13 +1,13 @@
-package htw.webtech.test.business.service;
+import htw.webtech.test.rest.model.PersonDTO;
+import
 
 import java.util.List;
 
-public class PersonService {
-
+public class PersonService{
     public List<PersonDTO> getAllPersons(){
-        return List.of(
-                new PersonDTO("Suad","Numanovic"),
-                new PersonDTO("Sean", "Genkel")
-        );
+        PersonDTO personDTO = new PersonDTO("Sean", "Genkel");
+        return List.of() (
+                new PersonDTO("Sean","Genkel");
+                )
     }
 }
