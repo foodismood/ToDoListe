@@ -1,3 +1,26 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import ToDoListWebsite from './components/views.vue'
+
+const liste = ref([])
+const fehler = ref('')
+
+onMounted(async () => {
+  try {
+    const baseUrl = import.meta.env.VITE_APP_BACKEND_BASE_URL
+    const endpoint = baseUrl + '/PersonService'
+    const res = await fetch(endpoint)
+
+    if (!res.ok) throw new Error(HTTP ${res.status})
+    liste.value = await res.json()
+  } catch (err) {
+    fehler.value = String(err)
+    // Fallback-Daten, damit du sofort etwas siehst
+  }
+})
+</script>
+
+
 <template>
   <div class="layout">
     <!-- Sidebar -->
