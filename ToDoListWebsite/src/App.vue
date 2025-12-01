@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import ToDoListWebsite from './components/views.vue'
+import TodoList from './components/TodoList.vue'
 
 const liste = ref([])
 const fehler = ref('')
@@ -43,10 +44,6 @@ onMounted(async () => {
     </main>
   </div>
 </template>
-
-<script setup>
-import TodoList from './components/TodoList.vue'
-</script>
 
 <style scoped>
 .layout {
