@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import ToDoListWebsite from './components/views.vue'
 import TodoList from './components/TodoList.vue'
 
 const liste = ref([])
@@ -12,7 +11,7 @@ onMounted(async () => {
     const endpoint = baseUrl + '/PersonService'
     const res = await fetch(endpoint)
 
-    if (!res.ok) throw new Error(HTTP ${res.status})
+if (!res.ok) throw new Error(`HTTP ${res.status}`)
     liste.value = await res.json()
   } catch (err) {
     fehler.value = String(err)
