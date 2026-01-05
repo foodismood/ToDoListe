@@ -18,17 +18,29 @@ const category = ref('')
 const important = ref(false)
 
 watch(
-  () => props.activeView,
-  (v) => {
-    // For "Mein Tag" pre-fill dueDate with selected date so the task shows up immediately
-    if (v === 'myday') dueDate.value = props.selectedDateIso
-  },
-  { immediate: true }
+    () => props.activeView,
+    (v) => {
+      // For "Mein Tag" pre-fill dueDate with selected date so the task shows up immediately
+      if (v === 'myday') dueDate.value = props.selectedDateIso
+    },
+    { immediate: true }
 )
 
+/**
+ * Kategorien-Liste ohne Duplikate:
+ * - Default-Kategorien immer dabei
+ * - Kategorien aus vorhandenen Todos ergänzen
+ * - Alles deduplizieren (auch wenn z.B. "Uni" schon im Set ist)
+ */
 const categories = computed(() => {
-  const set = new Set(props.todos.map(t => t.category).filter(Boolean))
-  return ['Arbeit', 'Privat', 'Uni', ...Array.from(set)]
+  const defaults = ['Arbeit', 'Privat', 'Uni']
+
+  const fromTodos = props.todos
+      .map(t => (t.category || '').trim())
+      .filter(Boolean)
+
+  const all = [...defaults, ...fromTodos]
+  return [...new Set(all)]
 })
 
 const openTodos = computed(() => props.todos.filter(t => !t.completed))
@@ -67,10 +79,10 @@ function fmtDate(iso) {
   <section class="composer">
     <div class="row">
       <input
-        v-model="title"
-        class="input title"
-        placeholder="Neue Aufgabe hinzufügen…"
-        @keyup.enter="submit"
+          v-model="title"
+          class="input title"
+          placeholder="Neue Aufgabe hinzufügen…"
+          @keyup.enter="submit"
       />
       <button class="btn primary" @click="submit" :disabled="loading || !title.trim()">Hinzufügen</button>
     </div>
@@ -89,10 +101,10 @@ function fmtDate(iso) {
       </label>
 
       <input
-        v-model="notes"
-        class="input notes"
-        placeholder="Notizen (optional)"
-        @keyup.enter="submit"
+          v-model="notes"
+          class="input notes"
+          placeholder="Notizen (optional)"
+          @keyup.enter="submit"
       />
     </div>
   </section>
@@ -108,29 +120,29 @@ function fmtDate(iso) {
       <div class="group">
         <div class="group-title">Offen <span class="count">{{ openTodos.length }}</span></div>
         <TaskRow
-          v-for="t in openTodos"
-          :key="t.id"
-          :todo="t"
-          :fmt-date="fmtDate"
-          @toggle-completed="emit('toggle-completed', t.id)"
-          @toggle-important="emit('toggle-important', t.id)"
-          @remove="emit('remove', t.id)"
-          @update="payload => emit('update', t.id, payload)"
+            v-for="t in openTodos"
+            :key="t.id"
+            :todo="t"
+            :fmt-date="fmtDate"
+            @toggle-completed="emit('toggle-completed', t.id)"
+            @toggle-important="emit('toggle-important', t.id)"
+            @remove="emit('remove', t.id)"
+            @update="payload => emit('update', t.id, payload)"
         />
       </div>
 
       <div class="group" v-if="doneTodos.length">
         <div class="group-title">Erledigt <span class="count">{{ doneTodos.length }}</span></div>
         <TaskRow
-          v-for="t in doneTodos"
-          :key="t.id"
-          :todo="t"
-          :fmt-date="fmtDate"
-          done
-          @toggle-completed="emit('toggle-completed', t.id)"
-          @toggle-important="emit('toggle-important', t.id)"
-          @remove="emit('remove', t.id)"
-          @update="payload => emit('update', t.id, payload)"
+            v-for="t in doneTodos"
+            :key="t.id"
+            :todo="t"
+            :fmt-date="fmtDate"
+            done
+            @toggle-completed="emit('toggle-completed', t.id)"
+            @toggle-important="emit('toggle-important', t.id)"
+            @remove="emit('remove', t.id)"
+            @update="payload => emit('update', t.id, payload)"
         />
       </div>
     </div>
