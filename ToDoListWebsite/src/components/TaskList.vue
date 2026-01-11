@@ -17,30 +17,24 @@ const dueDate = ref('')
 const category = ref('')
 const important = ref(false)
 
+const formError = ref('')
+
 watch(
-    () => props.activeView,
-    (v) => {
-      // For "Mein Tag" pre-fill dueDate with selected date so the task shows up immediately
-      if (v === 'myday') dueDate.value = props.selectedDateIso
-    },
-    { immediate: true }
+  () => props.activeView,
+  (v) => {
+    if (v === 'myday') dueDate.value = props.selectedDateIso
+  },
+  { immediate: true }
 )
 
-/**
- * Kategorien-Liste ohne Duplikate:
- * - Default-Kategorien immer dabei
- * - Kategorien aus vorhandenen Todos ergänzen
- * - Alles deduplizieren (auch wenn z.B. "Uni" schon im Set ist)
- */
+watch(title, () => {
+  if (formError.value) formError.value = ''
+})
+
 const categories = computed(() => {
   const defaults = ['Arbeit', 'Privat', 'Uni']
-
-  const fromTodos = props.todos
-      .map(t => (t.category || '').trim())
-      .filter(Boolean)
-
-  const all = [...defaults, ...fromTodos]
-  return [...new Set(all)]
+  const fromTodos = props.todos.map(t => (t.category || '').trim()).filter(Boolean)
+  return [...new Set([...defaults, ...fromTodos])]
 })
 
 const openTodos = computed(() => props.todos.filter(t => !t.completed))
@@ -51,13 +45,18 @@ function resetForm() {
   notes.value = ''
   category.value = ''
   important.value = false
-  // keep due date as-is for My Day
   if (props.activeView !== 'myday') dueDate.value = ''
 }
 
 async function submit() {
   const t = title.value.trim()
   if (!t) return
+
+  if (t.length < 4) {
+    formError.value = 'Der Aufgabenname ist zu kurz (mindestens 4 Zeichen).'
+    return
+  }
+
   await emit('add', {
     title: t,
     notes: notes.value?.trim() || null,
@@ -65,6 +64,7 @@ async function submit() {
     category: category.value || null,
     important: important.value
   })
+
   resetForm()
 }
 
@@ -79,13 +79,15 @@ function fmtDate(iso) {
   <section class="composer">
     <div class="row">
       <input
-          v-model="title"
-          class="input title"
-          placeholder="Neue Aufgabe hinzufügen…"
-          @keyup.enter="submit"
+        v-model="title"
+        class="input title"
+        placeholder="Neue Aufgabe hinzufügen…"
+        @keyup.enter="submit"
       />
       <button class="btn primary" @click="submit" :disabled="loading || !title.trim()">Hinzufügen</button>
     </div>
+
+    <div class="form-error" v-if="formError">{{ formError }}</div>
 
     <div class="row details">
       <input v-model="dueDate" class="input" type="date" />
@@ -101,16 +103,17 @@ function fmtDate(iso) {
       </label>
 
       <input
-          v-model="notes"
-          class="input notes"
-          placeholder="Notizen (optional)"
-          @keyup.enter="submit"
+        v-model="notes"
+        class="input notes"
+        placeholder="Notizen (optional)"
+        @keyup.enter="submit"
       />
     </div>
   </section>
 
   <section class="list">
     <div class="muted" v-if="loading">Lade…</div>
+
     <div class="empty" v-else-if="props.todos.length === 0">
       <div class="empty-title">Noch keine Aufgaben</div>
       <div class="muted">Füge oben eine neue Aufgabe hinzu.</div>
@@ -120,29 +123,29 @@ function fmtDate(iso) {
       <div class="group">
         <div class="group-title">Offen <span class="count">{{ openTodos.length }}</span></div>
         <TaskRow
-            v-for="t in openTodos"
-            :key="t.id"
-            :todo="t"
-            :fmt-date="fmtDate"
-            @toggle-completed="emit('toggle-completed', t.id)"
-            @toggle-important="emit('toggle-important', t.id)"
-            @remove="emit('remove', t.id)"
-            @update="payload => emit('update', t.id, payload)"
+          v-for="t in openTodos"
+          :key="t.id"
+          :todo="t"
+          :fmt-date="fmtDate"
+          @toggle-completed="emit('toggle-completed', t.id)"
+          @toggle-important="emit('toggle-important', t.id)"
+          @remove="emit('remove', t.id)"
+          @update="payload => emit('update', t.id, payload)"
         />
       </div>
 
       <div class="group" v-if="doneTodos.length">
         <div class="group-title">Erledigt <span class="count">{{ doneTodos.length }}</span></div>
         <TaskRow
-            v-for="t in doneTodos"
-            :key="t.id"
-            :todo="t"
-            :fmt-date="fmtDate"
-            done
-            @toggle-completed="emit('toggle-completed', t.id)"
-            @toggle-important="emit('toggle-important', t.id)"
-            @remove="emit('remove', t.id)"
-            @update="payload => emit('update', t.id, payload)"
+          v-for="t in doneTodos"
+          :key="t.id"
+          :todo="t"
+          :fmt-date="fmtDate"
+          done
+          @toggle-completed="emit('toggle-completed', t.id)"
+          @toggle-important="emit('toggle-important', t.id)"
+          @remove="emit('remove', t.id)"
+          @update="payload => emit('update', t.id, payload)"
         />
       </div>
     </div>
@@ -150,6 +153,16 @@ function fmtDate(iso) {
 </template>
 
 <style scoped>
+.form-error {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.08);
+  border-radius: 12px;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
 .composer {
   margin-top: 16px;
   padding: 14px;
@@ -215,44 +228,5 @@ function fmtDate(iso) {
 
 .list {
   margin-top: 18px;
-}
-
-.group {
-  margin-top: 14px;
-}
-
-.group-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 800;
-  margin-bottom: 10px;
-}
-
-.count {
-  font-size: 12px;
-  color: var(--muted);
-  border: 1px solid var(--border);
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-
-.empty {
-  margin-top: 30px;
-  border: 1px dashed var(--border);
-  border-radius: 14px;
-  padding: 18px;
-}
-
-.empty-title {
-  font-weight: 800;
-  margin-bottom: 6px;
-}
-
-@media (max-width: 720px) {
-  .row {
-    flex-direction: column;
-    align-items: stretch;
-  }
 }
 </style>

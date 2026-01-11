@@ -5,7 +5,8 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public record UpdateTodoRequest(
-        @Size(max = 200) String title,
+        @Size(min = 4, max = 200, message = "Der Aufgabenname ist zu kurz (mindestens 4 Zeichen).")
+        String title,
         @Size(max = 1000) String notes,
         LocalDate dueDate,
         @Size(max = 60) String category,

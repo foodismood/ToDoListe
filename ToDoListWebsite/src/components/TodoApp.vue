@@ -32,14 +32,6 @@ async function refresh() {
 
 onMounted(refresh)
 
-function isSameDay(a, b) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  )
-}
-
 const selectedDateIso = computed(() => {
   const d = selectedDate.value
   const yyyy = d.getFullYear()
@@ -66,28 +58,53 @@ const title = computed(() => {
 })
 
 async function addTask(payload) {
-  const created = await api.createTodo(payload)
-  todos.value = [created, ...todos.value]
+  error.value = ''
+  try {
+    const created = await api.createTodo(payload)
+    todos.value = [created, ...todos.value]
+  } catch (e) {
+    error.value = String(e?.message || e)
+  }
 }
 
 async function toggleCompleted(id) {
-  const updated = await api.toggleCompleted(id)
-  todos.value = todos.value.map(t => (t.id === id ? updated : t))
+  error.value = ''
+  try {
+    const updated = await api.toggleCompleted(id)
+    todos.value = todos.value.map(t => (t.id === id ? updated : t))
+  } catch (e) {
+    error.value = String(e?.message || e)
+  }
 }
 
 async function toggleImportant(id) {
-  const updated = await api.toggleImportant(id)
-  todos.value = todos.value.map(t => (t.id === id ? updated : t))
+  error.value = ''
+  try {
+    const updated = await api.toggleImportant(id)
+    todos.value = todos.value.map(t => (t.id === id ? updated : t))
+  } catch (e) {
+    error.value = String(e?.message || e)
+  }
 }
 
 async function removeTask(id) {
-  await api.deleteTodo(id)
-  todos.value = todos.value.filter(t => t.id !== id)
+  error.value = ''
+  try {
+    await api.deleteTodo(id)
+    todos.value = todos.value.filter(t => t.id !== id)
+  } catch (e) {
+    error.value = String(e?.message || e)
+  }
 }
 
 async function updateTask(id, payload) {
-  const updated = await api.updateTodo(id, payload)
-  todos.value = todos.value.map(t => (t.id === id ? updated : t))
+  error.value = ''
+  try {
+    const updated = await api.updateTodo(id, payload)
+    todos.value = todos.value.map(t => (t.id === id ? updated : t))
+  } catch (e) {
+    error.value = String(e?.message || e)
+  }
 }
 
 const dueDateMap = computed(() => {
